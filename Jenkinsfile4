@@ -89,7 +89,7 @@ EOF
         stage('Copy mysite dans conteneur'){
             steps{
                 sh 'sudo cp -rf ./monsite/ ./volumemyapp'
-                sh 'docker exec myapp ls -l /usr/share/nginx/html'            }
+                sh 'docker exec myapp ls -l /var/www/html'            }
         }
       
     }
