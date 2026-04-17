@@ -29,8 +29,8 @@ EXPOSE 80 22
 
 # Définir un mot de passe root
 RUN echo "root:password" | chpasswd
-COPY mysite /var/www/html/
-# Démarrage de SSH en premier plan
+#COPY mysite /var/www/html/
+# Démarrage de Nginx en premier plan
 CMD ["nginxtl", "-D", "FOREGROUND"]
 
 
