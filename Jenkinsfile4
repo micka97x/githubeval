@@ -70,7 +70,7 @@ EOF
         stage('create-macvlan192') {
             steps {
                 sh 'docker network create -d macvlan --subnet=192.168.10.0/24 --gateway=192.168.10.254 -o parent=ens33 macvlan192'
-                sh 'docker inspect network macvlan192
+                sh 'docker inspect network macvlan192'
             }
         }
         
