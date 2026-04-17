@@ -31,5 +31,5 @@ EXPOSE 80 22
 RUN echo "root:password" | chpasswd
 COPY monsite /usr/share/nginx/html/
 # Démarrage de Nginx en premier plan
-CMD ["nginx", "-g", "daemon off;"]
-
+#CMD ["nginx", "-g", "daemon off;"]
+CMD ["nginx", "-D", "FOREGROUND"]
