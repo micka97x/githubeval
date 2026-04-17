@@ -1,0 +1,96 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('clean project'){
+            steps {
+                cleanWs()
+            }
+        }
+
+        stage('checkout scm') {
+            steps {
+                git branch: 'main', url: 'https://github.com/micka97x/githubeval.git'
+            }
+        }
+	stage('Install Docker') {
+            steps {
+                sh '''
+                
+                
+                set -e
+
+                # Update & install prerequisites
+                sudo apt update
+                sudo apt install -y ca-certificates curl
+
+                # Add Docker GPG key
+                sudo install -m 0755 -d /etc/apt/keyrings
+                sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+                sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+                # Add Docker repository
+                echo "Adding Docker repository..."
+                UBUNTU_CODENAME=$( . /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}" )
+                ARCH=$(dpkg --print-architecture)
+
+                sudo tee /etc/apt/sources.list.d/docker.sources > /dev/null <<EOF
+Types: deb
+URIs: https://download.docker.com/linux/ubuntu
+Suites: ${UBUNTU_CODENAME}
+Components: stable
+Architectures: ${ARCH}
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF
+
+                # Install Docker
+                sudo apt update
+                sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+                # Start Docker
+                sudo systemctl start docker
+                sudo systemctl enable docker
+
+                # Permissions (attention en prod ⚠️)
+                sudo chmod 666 /var/run/docker.sock
+                sudo usermod -aG docker $USER
+
+                # Test Docker
+                sudo docker run hello-world
+                '''
+            }
+        }
+         stage('build-images-nginx') {
+            steps {
+                sh 'docker rmi -f $(docker images -q)'
+                sh 'docker build -t my-nginx .'
+                sh 'docker image ls'
+            }
+        }
+        stage('create-macvlan192') {
+            steps {
+				sh 'docker network rm macvlan192'
+                sh 'docker network create -d macvlan --subnet=192.168.10.0/24 --gateway=192.168.10.254 -o parent=ens33 macvlan192'
+                sh 'docker network inspect macvlan192'
+            }
+        }
+        
+        stage('Create conteneur') {
+            steps {
+                sh 'docker rm -f $(docker ps -a -q)'
+                sh 'docker run -d --name myapp --hostname myapp -v ./volumemyapp:/usr/share/nginx/html --network macvlan192 --ip 192.168.10.20 my-nginx'
+                sh 'docker ps'
+                sh 'docker exec myapp /etc/init.d/ssh start'
+                sh 'docker exec myapp /etc/init.d/ssh status'
+                sh 'docker exec myapp /etc/init.d/nginx status'
+                sh 'docker exec myapp /etc/init.d/ssh restart'
+            }
+        }
+        stage('Copy mysite dans conteneur'){
+            steps{
+                sh 'sudo cp -rf ./monsite/ ./volumemyapp'
+                sh 'docker exec myapp ls -l /usr/share/nginx/html'            }
+        }
+      
+    }
+}
