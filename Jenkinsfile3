@@ -1,0 +1,17 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('checkout scm') {
+            steps {
+                git branch: 'main', url: 'https://github.com/micka97x/githubeval.git'
+            }
+        }
+        stage('build-images-nginx') {
+            steps {
+                sh 'docker build -t my-nginx.'
+                sh 'docker image ls'
+            }
+        }
+    }
+}
