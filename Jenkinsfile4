@@ -62,6 +62,7 @@ EOF
         }
          stage('build-images-nginx') {
             steps {
+				sh 'docker rm -f $(docker ps -a -q)'
                 sh 'docker rmi -f $(docker images -q)'
                 sh 'docker build -t my-nginx .'
                 sh 'docker image ls'
@@ -77,7 +78,6 @@ EOF
         
         stage('Create conteneur') {
             steps {
-                sh 'docker rm -f $(docker ps -a -q)'
                 sh 'docker run -d --name myapp --hostname myapp -v ./volumemyapp:/usr/share/nginx/html --network macvlan192 --ip 192.168.10.20 my-nginx'
                 sh 'docker ps'
                 sh 'docker exec myapp /etc/init.d/ssh start'
